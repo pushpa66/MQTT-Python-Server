@@ -21,7 +21,7 @@ def on_message(client, userdata, msg):
     vars_to_sql = []
     keys_to_sql = []
         
-    valiadte = False
+    validate = False
     list = []
     time = 0
 
@@ -47,55 +47,57 @@ def on_message(client, userdata, msg):
                 print "value_type is not unicode"
                 vars_to_sql.append(str(value))
                 keys_to_sql.append(key)
-
-    mysql_db = 'dashboard'
-    db = MySQLdb.connect(mysql_server, mysql_username, mysql_password, mysql_db)
-    cursor = db.cursor()
-    #check the database exists or not. if not create it
-    checkDataBase(db, cursor, dbName)
-    db.close()
-    mysql_db = dbName
-    db = MySQLdb.connect(mysql_server, mysql_username, mysql_password, mysql_db)
-    cursor = db.cursor()
-
-    for i in range(0,len(keys_to_sql)):
-        keys_to_table = []
-        keys_to_table.append("id INT(11) PRIMARY KEY AUTO_INCREMENT")
-        keys_to_table.append("timeStamp VARCHAR(10)")
-        keys_to_table.append(keys_to_sql[i]+" VARCHAR(5)")
-        keys_to_table = ', '.join(keys_to_table)
-        
+    if (validate):
+        mysql_db = 'dashboard'
+        db = MySQLdb.connect(mysql_server, mysql_username, mysql_password, mysql_db)
+        cursor = db.cursor()
         #check the database exists or not. if not create it
-        checkTable(db, cursor, keys_to_sql[i], keys_to_table)
-        
-        keys = []
-        keys.append("timeStamp")
-        keys.append(keys_to_sql[i])
-        keys = ', '.join(keys)
+        checkDataBase(db, cursor, dbName)
+        db.close()
+        mysql_db = dbName
+        db = MySQLdb.connect(mysql_server, mysql_username, mysql_password, mysql_db)
+        cursor = db.cursor()
 
-        print keys
-        
-        values = []
-        values.append(time)
-        values.append(vars_to_sql[i])
+        for i in range(0,len(keys_to_sql)):
+            keys_to_table = []
+            keys_to_table.append("id INT(11) PRIMARY KEY AUTO_INCREMENT")
+            keys_to_table.append("timeStamp VARCHAR(10)")
+            keys_to_table.append(keys_to_sql[i]+" VARCHAR(5)")
+            keys_to_table = ', '.join(keys_to_table)
+            
+            #check the database exists or not. if not create it
+            checkTable(db, cursor, keys_to_sql[i], keys_to_table)
+            
+            keys = []
+            keys.append("timeStamp")
+            keys.append(keys_to_sql[i])
+            keys = ', '.join(keys)
 
-        print values
-    
-        try:
-           queryText = "INSERT INTO %s(%s) VALUES %r"
-           queryArgs = (keys_to_sql[i],keys, tuple(values))
-           cursor.execute(queryText % queryArgs)
-           print('Successfully Added record to mysql')
-           db.commit()
-        except MySQLdb.Error, e:
+            print keys
+            
+            values = []
+            values.append(time)
+            values.append(vars_to_sql[i])
+
+            print values
+        
             try:
-                print "MySQL Error [%d]: %s" % (e.args[0], e.args[1])
-            except IndexError:
-                print "MySQL Error: %s" % str(e)
-            # Rollback in case there is any error
-            db.rollback()
-            print('ERROR adding record to MYSQL')
-    db.close()
+               queryText = "INSERT INTO %s(%s) VALUES %r"
+               queryArgs = (keys_to_sql[i],keys, tuple(values))
+               cursor.execute(queryText % queryArgs)
+               print('Successfully Added record to mysql')
+               db.commit()
+            except MySQLdb.Error, e:
+                try:
+                    print "MySQL Error [%d]: %s" % (e.args[0], e.args[1])
+                except IndexError:
+                    print "MySQL Error: %s" % str(e)
+                # Rollback in case there is any error
+                db.rollback()
+                print('ERROR adding record to MYSQL')
+        db.close()
+    else:
+        print "Data is not valid"
     
 def checkDataBase(db, cursor, dbName):
     cursor.execute("SET sql_notes = 0; ")
